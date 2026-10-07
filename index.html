@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Boat lift 3D model</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&display=swap">
+<style>
+:root{
+  --paper:#F3EBD3; --shoal:#CFE6E4; --channel:#0E3A53; --ink:#1C2B33; --muted:#52656E;
+  --mark:#A8136F; --line:#C9BD9A; --panel:#FBF6E6; --btn:#EDE3C6; --sky1:#DDEDEE; --sky2:#F3EBD3;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10222C; --shoal:#16465A; --channel:#9FD3E6; --ink:#E8EEF0; --muted:#9DB0B8;
+    --mark:#F27CC0; --line:#2C4552; --panel:#152C38; --btn:#1E3B49; --sky1:#0B1B24; --sky2:#16303D;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10222C; --shoal:#16465A; --channel:#9FD3E6; --ink:#E8EEF0; --muted:#9DB0B8;
+  --mark:#F27CC0; --line:#2C4552; --panel:#152C38; --btn:#1E3B49; --sky1:#0B1B24; --sky2:#16303D;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:Barlow,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.35;display:flex;flex-direction:column;overflow:hidden}
+header{padding:6px 10px;border-bottom:1px solid var(--line)}
+h1{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-weight:600;font-size:21px;line-height:1.1;margin:0 0 8px;letter-spacing:.01em;display:none}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;font:inherit;font-weight:500;color:var(--ink);background:var(--btn);border:1px solid var(--line);border-radius:4px;padding:6px 6px;min-height:38px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--channel);color:var(--paper);border-color:var(--channel)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+#stage{flex:1;min-height:0;position:relative;background:linear-gradient(var(--sky1),var(--sky2));touch-action:none}
+#stage canvas{display:block;width:100%;height:100%}
+#hint{position:absolute;left:12px;top:8px;font-size:13px;color:var(--muted);pointer-events:none}
+#fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+#bar{display:flex;gap:6px;padding:6px 10px;background:var(--panel);border-top:1px solid var(--line)}
+#bar button{flex:1;font:inherit;font-weight:500;color:var(--ink);background:var(--btn);border:1px solid var(--line);border-radius:4px;padding:6px 4px;min-height:38px;cursor:pointer}
+#bar #more[aria-expanded="true"]{background:var(--channel);color:var(--paper);border-color:var(--channel)}
+#panel{background:var(--panel);border-top:1px solid var(--line);padding:10px 14px 12px;max-height:42%;overflow-y:auto}
+#panel[hidden]{display:none}
+.read{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:0 0 8px}
+.read dt{color:var(--muted)}
+.read dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.read dd.key{color:var(--mark)}
+.ctl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px;margin-top:6px}
+.ctl label{color:var(--muted)}
+.ctl output{font-weight:600;font-variant-numeric:tabular-nums}
+.ctl input{grid-column:1/3;width:100%;accent-color:var(--mark);height:28px;margin:0}
+.note{color:var(--muted);font-size:13px;margin:8px 0 0}
+@media (min-width:820px){
+  h1{display:block}
+}
+/* canvas fills the whole frame; controls float over it */
+body{display:block;min-height:min(75vw,900px)}
+h1{display:none !important}
+#stage{position:fixed;top:0;left:0;right:0;bottom:0}
+header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;border:0;background:transparent;padding:8px 10px}
+.seg{max-width:900px;flex-wrap:wrap}
+#hint{top:58px}
+#bar{position:fixed;bottom:env(safe-area-inset-bottom,0px);left:0;right:0;z-index:2;border:0;background:transparent;padding:8px 10px}
+#bar button{max-width:130px}
+#panel{position:fixed;left:10px;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:2;width:min(400px,calc(100% - 20px));max-height:55%;border:1px solid var(--line);border-radius:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Boat lift 3D model</h1>
+  <div class="seg" role="group" aria-label="Choose a boat">
+    <button data-boat="whaler" aria-pressed="true">Whaler 405</button>
+    <button data-boat="tiara" aria-pressed="false">Tiara 43 LE</button>
+    <button data-boat="tiara39" aria-pressed="false">Tiara 39 LE</button>
+    <button data-boat="aquila" aria-pressed="false">Aquila 36</button>
+    <button data-boat="pursuit" aria-pressed="false">Pursuit 445</button>
+  </div>
+</header>
+<div id="stage">
+  <div id="hint">Drag to turn. Pinch to zoom. Two fingers to slide.</div>
+  <div id="fail">The 3D viewer could not load. Check your connection and reload the page.</div>
+</div>
+<div id="bar">
+  <button id="more" aria-expanded="false" aria-controls="panel">Controls</button>
+  <button id="fs">Full screen</button>
+</div>
+<section id="panel" hidden>
+  <dl class="read">
+    <dt>Bow to seawall face</dt><dd class="key" id="rClear"></dd>
+    <dt>Engines from seawall face</dt><dd id="rEng"></dd>
+    <dt>Engines past rear cradle beam</dt><dd id="rOver"></dd>
+    <dt>Hardtop above pier deck</dt><dd id="rTop"></dd>
+    <dt>Cockpit floor against pier deck</dt><dd id="rSole"></dd>
+  </dl>
+  <div class="ctl">
+    <label for="lift">Keel above mean high water</label><output id="oLift"></output>
+    <input id="lift" type="range" min="-2" max="8" step="0.25" value="2">
+  </div>
+  <div class="ctl">
+    <label for="tide">Tide</label><output id="oTide"></output>
+    <input id="tide" type="range" min="-0.25" max="1.25" step="0.25" value="1.25">
+  </div>
+  <p class="note" id="note"></p>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+  var stage=document.getElementById('stage');
+  if(!window.THREE||!THREE.OrbitControls){document.getElementById('fail').style.display='flex';return;}
+
+  // All distances in feet. X runs along the seawall (0 = boat centerline),
+  // Z is distance out from the seawall face, Y is elevation (NGVD 1929).
+  var MHW=1.25, BOTTOM=-4.25, PIER=7.5, CAP=7.0, PILE_TOP=13.5, MID=30.5, PERSON=5+11/12;
+  var BOATS={
+    whaler:{tip:2.72,bow:4.26,stern:45.55,eng:47.34,beam:13.47,engines:4,draft:2.0,sB:5.9,sS:3.2,top:10.44,htA:36.63,htB:21.2,sole:0.8,cat:false,
+      clear:'2 feet 9 inches',note:'Whaler shown with full fuel and water. Hull, cabin and hardtop are simplified shapes built from the Brunswick dimension sheet; cockpit floor height is estimated.'},
+    tiara:{tip:3.54,bow:3.54,stern:47.0,eng:49.95,beam:12.95,engines:2,draft:2.4,sB:5.0,sS:3.5,top:9.6,htA:37.67,htB:19.67,sole:1.0,cat:false,
+      clear:'about 3 feet 6 inches',note:'Tiara shown with the center of gravity at 165 inches (the drawing gives 160 to 170). Heights are scaled from the Tiara drawing; cockpit floor height is estimated.'},
+    tiara39:{tip:6.04,bow:6.04,stern:45.37,eng:48.56,beam:12.56,engines:2,draft:2.4,sB:4.86,sS:3.4,top:10.38,htA:36.24,htB:21.54,sole:1.0,cat:false,
+      clear:'about 6 feet',note:'Tiara 39 LE shown at the preliminary center of gravity on its drawing, 156 3/16 inches forward of the transom, plus or minus 6 inches. Lengths and hardtop position come from printed dimensions; cockpit floor height is estimated.'},
+    pursuit:{tip:2.44,bow:2.44,stern:48.94,eng:49.9,beam:13.83,engines:3,draft:2.5,sB:5.77,sS:3.8,top:10.48,htA:37.2,htB:21.9,sole:1.6,cat:false,
+      clear:'about 2 feet 5 inches',note:'Pursuit shown at the approximate center of gravity marked on its sling drawing, about 182 inches forward of the transom. The drawing shows no engines, so how far they reach past the swim platform is estimated. Heights are scaled from the drawing; cockpit floor height is estimated.'},
+    aquila:{tip:8.45,bow:9.96,stern:45.91,eng:48.2,beam:14.76,engines:2,draft:2.0,sB:4.4,sS:3.0,top:8.45,htA:37.58,htB:19.66,sole:3.0,cat:true,
+      clear:'8 feet 5 inches',note:'Aquila shown with the center of gravity halfway between its lifting points. Waterline and deck heights are estimated from the 2017 lifting drawing.'}
+  };
+
+  var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  stage.insertBefore(renderer.domElement,stage.firstChild);
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(42,1,0.5,900);
+  var controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true; controls.dampingFactor=0.12; controls.maxPolarAngle=Math.PI*0.52;
+  controls.minDistance=8; controls.maxDistance=260;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x6f7f86,0.95));
+  var sun=new THREE.DirectionalLight(0xffffff,0.75); sun.position.set(60,90,80); scene.add(sun);
+
+  function mat(c,o){var m=new THREE.MeshLambertMaterial({color:c,side:THREE.DoubleSide});if(o!==undefined){m.transparent=true;m.opacity=o;m.depthWrite=false;}return m;}
+  var M={wood:mat(0x9A7B55),conc:mat(0xB9B6AC),land:mat(0xE2D5A6),sand:mat(0xC9BC8F),water:mat(0x3F8FA6,0.55),
+    hull:mat(0xF7F7F4),bottom:mat(0x1D3F5C),deck:mat(0xDAD3C2),glass:mat(0x24343C,0.6),top:mat(0xECECE8),
+    eng:mat(0x23282B),steel:mat(0x8D979C),a:mat(0xA8136F),b:mat(0xE0862A)};
+  var MARK=0xA8136F; M.mark=new THREE.MeshBasicMaterial({color:0x12A150,side:THREE.DoubleSide}); M.over=new THREE.MeshBasicMaterial({color:0x1F5FD0});
+
+  function box(g,m,x0,x1,y0,y1,z0,z1){
+    var me=new THREE.Mesh(new THREE.BoxGeometry(Math.abs(x1-x0),Math.abs(y1-y0),Math.abs(z1-z0)),m);
+    me.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2); g.add(me); return me;
+  }
+  function line(g,pts,color){
+    var geo=new THREE.BufferGeometry().setFromPoints(pts.map(function(p){return new THREE.Vector3(p[0],p[1],p[2]);}));
+    var l=new THREE.Line(geo,new THREE.LineBasicMaterial({color:color})); g.add(l); return l;
+  }
+  function label(g,text,x,y,z,w,col){ col=col||'#A8136F';
+    var c=document.createElement('canvas'); c.width=512; c.height=96;
+    var k=c.getContext('2d'); k.fillStyle='rgba(251,246,230,0.92)'; k.fillRect(0,0,512,96);
+    k.strokeStyle=col; k.lineWidth=4; k.strokeRect(2,2,508,92);
+    k.fillStyle=col; k.font='600 40px "Barlow Condensed","Arial Narrow",Arial,sans-serif'; k.textAlign='center'; k.textBaseline='middle';
+    k.fillText(text,256,50);
+    var s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));
+    s.scale.set(w,w*96/512,1); s.position.set(x,y,z); s.renderOrder=10; g.add(s); return s;
+  }
+  function person(g,m,x,y,z){
+    var p=new THREE.Group(), H=PERSON;
+    [-0.25,0.25].forEach(function(dx){var leg=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.17,2.85,10),m);leg.position.set(dx,1.425,0);p.add(leg);});
+    var torso=new THREE.Mesh(new THREE.BoxGeometry(1.0,2.0,0.55),m); torso.position.y=3.85; p.add(torso);
+    [-0.64,0.64].forEach(function(dx){var arm=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.11,2.1,8),m);arm.position.set(dx,3.75,0);p.add(arm);});
+    var neck=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.4,8),m); neck.position.y=5.0; p.add(neck);
+    var head=new THREE.Mesh(new THREE.SphereGeometry(0.38,14,10),m); head.position.y=H-0.38; p.add(head);
+    p.position.set(x,y,z); g.add(p); return p;
+  }
+
+  // ---------- fixed site ----------
+  var site=new THREE.Group(); scene.add(site);
+  box(site,M.sand,-110,140,BOTTOM-1,BOTTOM,-2.5,170);
+  box(site,M.land,-110,140,BOTTOM-1,CAP,-70,-2.5);
+  box(site,M.conc,-35.08,64.92,BOTTOM,CAP,-2.5,0);
+  box(site,M.wood,9.5,48.92,CAP-0.1,PIER,0,5);            // viewing platform that stays
+  box(site,M.wood,9.5,13.5,PIER-0.6,PIER,5,40);           // finger pier, 4 feet wide, 40 feet from the seawall face with the platform strip
+  [8,18,28,38].forEach(function(z){[9.9,13.1].forEach(function(x){box(site,M.conc,x-0.4,x+0.4,BOTTOM,PIER-0.6,z-0.4,z+0.4);});});
+  [14,24,34,44].forEach(function(x){box(site,M.conc,x-0.4,x+0.4,BOTTOM,CAP-0.1,3.6,4.4);});
+  for(var rz=5;rz<=40;rz+=5){box(site,M.steel,13.3,13.45,PIER,PIER+3,rz-0.07,rz+0.07);}
+  box(site,M.steel,13.3,13.45,PIER+2.9,PIER+3,5,40);       // 36 inch railing
+  [[-9,21.5],[9,21.5],[-9,39.5],[9,39.5]].forEach(function(p){box(site,M.conc,p[0]-0.5,p[0]+0.5,BOTTOM,PILE_TOP,p[1]-0.5,p[1]+0.5);});
+  [-9,9].forEach(function(x){box(site,M.steel,x-0.45,x+0.45,PILE_TOP,PILE_TOP+0.9,20.5,40.5);box(site,M.eng,x-0.6,x+0.6,PILE_TOP+0.9,PILE_TOP+1.9,38.6,40.4);box(site,M.eng,x-0.6,x+0.6,PILE_TOP+0.9,PILE_TOP+1.9,20.6,22.4);});
+  line(site,[[-17,PILE_TOP+1,MID],[9,PILE_TOP+1,MID]],MARK);
+  label(site,'Lift midpoint 30 feet 6 inches',-17,PILE_TOP+2.5,MID,13);
+  label(site,'Seawall face',-22,CAP+2,0,7);
+  label(site,'North',-30,4,52,5);
+  person(site,M.a,11.5,PIER,31).rotation.y=Math.PI/2;
+
+  // ---------- boat ----------
+  function rad(d){return d*Math.PI/180;}
+  function stations(b,beam,deckless){
+    var N=30,out=[];
+    for(var i=0;i<=N;i++){
+      var t=i/N, z=b.stern+(b.bow-b.stern)*t;
+      var f=t<0.5?1:Math.sqrt(Math.max(0,1-Math.pow((t-0.5)/0.5,2.4)));
+      f*=0.93+0.07*Math.min(1,t/0.15);
+      var hb=Math.max(0.04,beam/2*f);
+      var sh=b.sS+(b.sB-b.sS)*Math.pow(t,1.4);
+      var k=t<0.6?-b.draft:-b.draft+(b.draft+sh*0.55)*Math.pow((t-0.6)/0.4,2.2);
+      var cx=0.82*hb, ch=Math.min(sh-0.4,k+cx*Math.tan(rad(18+22*t)));
+      out.push({t:t,z:z,hb:hb,sh:sh,k:k,cx:cx,ch:ch});
+    }
+    return out;
+  }
+  function geo(tris){var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(tris,3));g.computeVertexNormals();return g;}
+  function quad(a,p,q,r,s){a.push(p[0],p[1],p[2],q[0],q[1],q[2],r[0],r[1],r[2],p[0],p[1],p[2],r[0],r[1],r[2],s[0],s[1],s[2]);}
+  function tri(a,p,q,r){a.push(p[0],p[1],p[2],q[0],q[1],q[2],r[0],r[1],r[2]);}
+  function hull(g,b,beam,xo,tc,decked){
+    var S=stations(b,beam), bot=[], side=[], dk=[];
+    for(var i=0;i<S.length-1;i++){
+      var A=S[i],B=S[i+1];
+      [-1,1].forEach(function(s){
+        quad(bot,[xo,A.k,A.z],[xo+s*A.cx,A.ch,A.z],[xo+s*B.cx,B.ch,B.z],[xo,B.k,B.z]);
+        quad(side,[xo+s*A.cx,A.ch,A.z],[xo+s*A.hb,A.sh,A.z],[xo+s*B.hb,B.sh,B.z],[xo+s*B.cx,B.ch,B.z]);
+      });
+      if(decked){
+        if(A.t>=tc){quad(dk,[xo-A.hb,A.sh,A.z],[xo+A.hb,A.sh,A.z],[xo+B.hb,B.sh,B.z],[xo-B.hb,B.sh,B.z]);}
+        else{var ia=Math.max(0.1,A.hb-0.5),ib=Math.max(0.1,B.hb-0.5);
+          quad(dk,[xo-ia,b.sole,A.z],[xo+ia,b.sole,A.z],[xo+ib,b.sole,B.z],[xo-ib,b.sole,B.z]);
+          if(B.t>=tc){quad(dk,[xo-B.hb,b.sole,B.z],[xo+B.hb,b.sole,B.z],[xo+B.hb,B.sh,B.z],[xo-B.hb,B.sh,B.z]);}
+        }
+      }
+    }
+    var T=S[0];
+    tri(side,[xo,T.k,T.z],[xo+T.cx,T.ch,T.z],[xo+T.hb,T.sh,T.z]);
+    tri(side,[xo,T.k,T.z],[xo-T.cx,T.ch,T.z],[xo-T.hb,T.sh,T.z]);
+    tri(side,[xo,T.k,T.z],[xo+T.hb,T.sh,T.z],[xo-T.hb,T.sh,T.z]);
+    g.add(new THREE.Mesh(geo(bot),M.bottom)); g.add(new THREE.Mesh(geo(side),M.hull));
+    if(dk.length){g.add(new THREE.Mesh(geo(dk),M.deck));}
+  }
+  function sheerAt(b,z){var t=(b.stern-z)/(b.stern-b.bow);return b.sS+(b.sB-b.sS)*Math.pow(Math.max(0,Math.min(1,t)),1.4);}
+
+  var dyn=null, current='whaler';
+  function build(){
+    if(dyn){scene.remove(dyn);dyn.traverse(function(o){if(o.geometry){o.geometry.dispose();}if(o.material&&o.material.map){o.material.map.dispose();o.material.dispose();}});}
+    dyn=new THREE.Group(); scene.add(dyn);
+    var b=BOATS[current], liftV=parseFloat(document.getElementById('lift').value), tide=parseFloat(document.getElementById('tide').value);
+    var keel=MHW+liftV, wl=keel+b.draft;
+
+    box(dyn,M.water,-110,140,tide-0.02,tide,0,170);
+    [21.5,39.5].forEach(function(z){
+      box(dyn,M.steel,-8.4,8.4,keel-1.3,keel-0.5,z-0.35,z+0.35);
+      [-8.4,8.4].forEach(function(x){line(dyn,[[x,keel-0.5,z],[x<0?-9:9,PILE_TOP,z]],0x6C767B);});
+    });
+
+    var boat=new THREE.Group(); boat.position.y=wl; dyn.add(boat);
+    var len=b.stern-b.bow, tc=(b.stern-b.htA)/len, hullW=b.beam*0.3, engX=[];
+    if(b.cat){
+      var off=b.beam/2-hullW/2;
+      hull(boat,b,hullW,-off,0,false); hull(boat,b,hullW,off,0,false);
+      box(boat,M.deck,-b.beam/2+0.2,b.beam/2-0.2,1.8,b.sole,b.bow+3.2,b.stern-0.3);
+      box(boat,M.hull,-b.beam/2+0.2,b.beam/2-0.2,b.sole,b.sole+1.3,b.bow+3.2,b.htB);
+      [-1,1].forEach(function(s){box(boat,M.hull,s*(b.beam/2-0.2),s*(b.beam/2-0.5),b.sole,b.sole+2.2,b.htB,b.stern-1);});
+      engX=[-off,off];
+    }else{
+      hull(boat,b,b.beam,0,tc,true);
+      var dz=sheerAt(b,b.htB);
+      box(boat,M.hull,-b.beam*0.26,b.beam*0.26,dz-0.2,dz+1.4,b.htB-7,b.htB);
+      var sp=b.engines===4?2.3:b.engines===3?2.6:2.9;
+      for(var e=0;e<b.engines;e++){engX.push((e-(b.engines-1)/2)*sp);}
+    }
+    var deckY=b.cat?b.sole:b.sole, houseEnd=b.htB+(b.htA-b.htB)*0.5;
+    box(boat,M.glass,-b.beam*0.33,b.beam*0.33,(b.cat?b.sole+1.3:sheerAt(b,b.htB)),b.top-0.3,b.htB,houseEnd);
+    box(boat,M.top,-b.beam*0.37,b.beam*0.37,b.top-0.3,b.top,b.htB-0.6,b.htA);
+    [-1,1].forEach(function(s){[houseEnd+0.3,b.htA-0.5].forEach(function(z){box(boat,M.top,s*b.beam*0.34-0.12,s*b.beam*0.34+0.12,deckY,b.top-0.3,z-0.12,z+0.12);});});
+    engX.forEach(function(x){
+      box(boat,M.eng,x-0.85,x+0.85,0.9,3.3,b.stern-0.4,b.eng);
+      box(boat,M.eng,x-0.25,x+0.25,-2.4,0.9,b.stern+0.3,b.stern+1.1);
+    });
+    if(b.tip<b.bow){box(boat,M.steel,-0.25,0.25,b.sB-0.3,b.sB+0.1,b.tip,b.bow+0.6);}
+    person(boat,M.b,b.cat?2.5:2.2,b.sole,b.stern-4.5);
+    // center of gravity mark: stripe down both hull sides, stripe across the hardtop, ball on a post
+    var cgTop=b.cat?b.sole+2.2:sheerAt(b,MID), hbm=b.beam/2;
+    [-1,1].forEach(function(s){box(boat,M.mark,s*(hbm+0.02),s*(hbm+0.1),-0.6,cgTop,MID-0.2,MID+0.2);});
+    box(boat,M.mark,-b.beam*0.375,b.beam*0.375,b.top,b.top+0.06,MID-0.2,MID+0.2);
+    box(boat,M.mark,-0.06,0.06,b.top,b.top+1.3,MID-0.06,MID+0.06);
+    var ball=new THREE.Mesh(new THREE.SphereGeometry(0.45,18,12),M.mark); ball.position.set(0,b.top+1.6,MID); boat.add(ball);
+    label(boat,'Center of gravity',0,b.top+3.1,MID,8,'#0C7A3B');
+
+    // stern overhang: rear cradle beam (at the outer piles) to the aft end of the engines
+    var REAR=39.5, ox=-(b.beam/2+1.3), oy=wl+b.sS+0.4, over=b.eng-REAR;
+    box(dyn,M.over,ox-0.07,ox+0.07,oy-0.07,oy+0.07,REAR,b.eng);
+    [REAR,b.eng].forEach(function(z){box(dyn,M.over,ox-0.9,ox+0.9,oy-0.07,oy+0.07,z-0.07,z+0.07);box(dyn,M.over,ox-0.07,ox+0.07,oy-1.6,oy+0.07,z-0.07,z+0.07);});
+    label(dyn,'Stern overhang '+feet(over),ox-1.5,oy+2.0,(REAR+b.eng)/2,12,'#1F5FD0');
+    document.getElementById('rOver').textContent=feet(over);
+    var my=wl+b.sB+0.6;
+    line(dyn,[[0,my,0],[0,my,b.tip]],MARK);
+    line(dyn,[[-1,my,0],[1,my,0]],MARK); line(dyn,[[-1,my,b.tip],[1,my,b.tip]],MARK);
+    label(dyn,'Bow clearance '+b.clear,0,my+2.2,b.tip/2,13);
+
+    document.getElementById('rClear').textContent=b.clear;
+    document.getElementById('rEng').textContent=feet(b.eng);
+    document.getElementById('rTop').textContent=signed(wl+b.top-PIER,'above','below');
+    document.getElementById('rSole').textContent=signed(wl+b.sole-PIER,'above','below');
+    document.getElementById('oLift').textContent=(liftV<0?'minus ':'')+feet(Math.abs(liftV));
+    document.getElementById('oTide').textContent=tide>=1.25?'Mean high water':tide<=-0.25?'Mean low water':feet(1.25-tide)+' below high';
+    document.getElementById('note').textContent=b.note+' The finger pier is 4 feet wide and runs 40 feet out from the seawall face. Pier deck is at 7 feet 6 inches and lift piles top out 6 feet above it, per the Trident sections. The lift is drawn as a four motor top beam cradle lift, one motor per pile. Each figure is 5 feet 11 inches tall.';
+    state={wl:wl,b:b};
+  }
+  var state={};
+  function feet(v){var tot=Math.round(v*12),f=Math.floor(tot/12),i=tot%12;return (f?f+(f===1?' foot':' feet'):'')+(f&&i?' ':'')+(i||!f?i+(i===1?' inch':' inches'):'');}
+  function signed(v,up,down){return Math.abs(v)<0.04?'level':feet(Math.abs(v))+' '+(v>0?up:down);}
+
+  function view(name){
+    var t=new THREE.Vector3(0,5,27), p;
+    if(name==='top'){p=new THREE.Vector3(0,118,26.99);}
+    else if(name==='side'){p=new THREE.Vector3(-78,10,27);}
+    else if(name==='pier'){t.set(-2,(state.wl||5)+3,27);p=new THREE.Vector3(11.5,PIER+PERSON-0.4,36);}
+    else{p=new THREE.Vector3(-50,34,74);}
+    controls.target.copy(t); camera.position.copy(p); controls.update();
+  }
+  function size(){var w=stage.clientWidth,h=stage.clientHeight;if(!w||!h){return;}renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+  if(window.ResizeObserver){new ResizeObserver(size).observe(stage);}else{window.addEventListener('resize',size);}
+
+  document.querySelectorAll('[data-boat]').forEach(function(btn){btn.addEventListener('click',function(){
+    current=btn.getAttribute('data-boat');
+    document.querySelectorAll('[data-boat]').forEach(function(o){o.setAttribute('aria-pressed',o===btn?'true':'false');});
+    build();
+  });});
+  document.querySelectorAll('[data-view]').forEach(function(btn){btn.addEventListener('click',function(){view(btn.getAttribute('data-view'));});});
+  document.getElementById('lift').addEventListener('input',build);
+  document.getElementById('tide').addEventListener('input',build);
+  renderer.domElement.addEventListener('pointerdown',function(){document.getElementById('hint').style.display='none';},{once:true});
+
+  var more=document.getElementById('more'),panel=document.getElementById('panel');
+  more.addEventListener('click',function(){var open=panel.hidden;panel.hidden=!open;more.setAttribute('aria-expanded',open?'true':'false');});
+  var fs=document.getElementById('fs'),de=document.documentElement;
+  var reqFs=de.requestFullscreen||de.webkitRequestFullscreen, exitFs=document.exitFullscreen||document.webkitExitFullscreen;
+  if(!reqFs||!(document.fullscreenEnabled||document.webkitFullscreenEnabled)){fs.style.display='none';}
+  else{fs.addEventListener('click',function(){
+    var on=document.fullscreenElement||document.webkitFullscreenElement;
+    try{var r=on?exitFs.call(document):reqFs.call(de);if(r&&r.catch){r.catch(function(){fs.style.display='none';});}}catch(e){fs.style.display='none';}
+  });}
+  size(); build(); view('orbit');
+  (function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);})();
+})();
+</script>
+</body>
+</html>
