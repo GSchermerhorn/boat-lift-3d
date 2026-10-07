@@ -72,7 +72,6 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
     <button data-boat="tiara" aria-pressed="false">Tiara 43 LE</button>
     <button data-boat="tiara39" aria-pressed="false">Tiara 39 LE</button>
     <button data-boat="aquila" aria-pressed="false">Aquila 36</button>
-    <button data-boat="pursuit" aria-pressed="false">Pursuit 445</button>
   </div>
 </header>
 <div id="stage">
@@ -119,8 +118,6 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
       clear:'about 3 feet 6 inches',note:'Tiara shown with the center of gravity at 165 inches (the drawing gives 160 to 170). Heights are scaled from the Tiara drawing; cockpit floor height is estimated.'},
     tiara39:{tip:6.04,bow:6.04,stern:45.37,eng:48.56,beam:12.56,engines:2,draft:2.4,sB:4.86,sS:3.4,top:10.38,htA:36.24,htB:21.54,sole:1.0,cat:false,
       clear:'about 6 feet',note:'Tiara 39 LE shown at the preliminary center of gravity on its drawing, 156 3/16 inches forward of the transom, plus or minus 6 inches. Lengths and hardtop position come from printed dimensions; cockpit floor height is estimated.'},
-    pursuit:{tip:2.44,bow:2.44,stern:48.94,eng:49.9,beam:13.83,engines:3,draft:2.5,sB:5.77,sS:3.8,top:10.48,htA:37.2,htB:21.9,sole:1.6,cat:false,
-      clear:'about 2 feet 5 inches',note:'Pursuit shown at the approximate center of gravity marked on its sling drawing, about 182 inches forward of the transom. The drawing shows no engines, so how far they reach past the swim platform is estimated. Heights are scaled from the drawing; cockpit floor height is estimated.'},
     aquila:{tip:8.45,bow:9.96,stern:45.91,eng:48.2,beam:14.76,engines:2,draft:2.0,sB:4.4,sS:3.0,top:8.45,htA:37.58,htB:19.66,sole:3.0,cat:true,
       clear:'8 feet 5 inches',note:'Aquila shown with the center of gravity halfway between its lifting points. Waterline and deck heights are estimated from the 2017 lifting drawing.'}
   };
@@ -140,6 +137,7 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
   var M={wood:mat(0x9A7B55),conc:mat(0xB9B6AC),land:mat(0xE2D5A6),sand:mat(0xC9BC8F),water:mat(0x3F8FA6,0.55),
     hull:mat(0xF7F7F4),bottom:mat(0x1D3F5C),deck:mat(0xDAD3C2),glass:mat(0x24343C,0.6),top:mat(0xECECE8),
     eng:mat(0x23282B),steel:mat(0x8D979C),a:mat(0xA8136F),b:mat(0xE0862A)};
+  M.glass.side=THREE.FrontSide;
   var MARK=0xA8136F; M.mark=new THREE.MeshBasicMaterial({color:0x12A150,side:THREE.DoubleSide}); M.over=new THREE.MeshBasicMaterial({color:0x1F5FD0});
 
   function box(g,m,x0,x1,y0,y1,z0,z1){
@@ -154,7 +152,7 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
     var c=document.createElement('canvas'); c.width=512; c.height=96;
     var k=c.getContext('2d'); k.fillStyle='rgba(251,246,230,0.92)'; k.fillRect(0,0,512,96);
     k.strokeStyle=col; k.lineWidth=4; k.strokeRect(2,2,508,92);
-    k.fillStyle=col; k.font='600 40px "Barlow Condensed","Arial Narrow",Arial,sans-serif'; k.textAlign='center'; k.textBaseline='middle';
+    k.fillStyle=col; var fs=40; do{k.font='600 '+fs+'px "Barlow Condensed","Arial Narrow",Arial,sans-serif'; fs-=2;}while(k.measureText(text).width>484&&fs>16); k.textAlign='center'; k.textBaseline='middle';
     k.fillText(text,256,50);
     var s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));
     s.scale.set(w,w*96/512,1); s.position.set(x,y,z); s.renderOrder=10; g.add(s); return s;
@@ -239,7 +237,7 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
     var b=BOATS[current], liftV=parseFloat(document.getElementById('lift').value), tide=parseFloat(document.getElementById('tide').value);
     var keel=MHW+liftV, wl=keel+b.draft;
 
-    box(dyn,M.water,-110,140,tide-0.02,tide,0,170);
+    box(dyn,M.water,-110,140,tide-0.02,tide,0,170).renderOrder=1;
     [21.5,39.5].forEach(function(z){
       box(dyn,M.steel,-8.4,8.4,keel-1.3,keel-0.5,z-0.35,z+0.35);
       [-8.4,8.4].forEach(function(x){line(dyn,[[x,keel-0.5,z],[x<0?-9:9,PILE_TOP,z]],0x6C767B);});
@@ -262,9 +260,9 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
       for(var e=0;e<b.engines;e++){engX.push((e-(b.engines-1)/2)*sp);}
     }
     var deckY=b.cat?b.sole:b.sole, houseEnd=b.htB+(b.htA-b.htB)*0.5;
-    box(boat,M.glass,-b.beam*0.33,b.beam*0.33,(b.cat?b.sole+1.3:sheerAt(b,b.htB)),b.top-0.3,b.htB,houseEnd);
+    box(boat,M.glass,-b.beam*0.33,b.beam*0.33,(b.cat?b.sole+1.25:sheerAt(b,houseEnd)-0.12),b.top-0.15,b.htB-0.05,houseEnd).renderOrder=2;
     box(boat,M.top,-b.beam*0.37,b.beam*0.37,b.top-0.3,b.top,b.htB-0.6,b.htA);
-    [-1,1].forEach(function(s){[houseEnd+0.3,b.htA-0.5].forEach(function(z){box(boat,M.top,s*b.beam*0.34-0.12,s*b.beam*0.34+0.12,deckY,b.top-0.3,z-0.12,z+0.12);});});
+    [-1,1].forEach(function(s){[houseEnd+0.3,b.htA-0.5].forEach(function(z){box(boat,M.top,s*b.beam*0.34-0.12,s*b.beam*0.34+0.12,deckY-0.05,b.top-0.15,z-0.12,z+0.12);});});
     engX.forEach(function(x){
       box(boat,M.eng,x-0.85,x+0.85,0.9,3.3,b.stern-0.4,b.eng);
       box(boat,M.eng,x-0.25,x+0.25,-2.4,0.9,b.stern+0.3,b.stern+1.1);
@@ -274,7 +272,7 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
     // center of gravity mark: stripe down both hull sides, stripe across the hardtop, ball on a post
     var cgTop=b.cat?b.sole+2.2:sheerAt(b,MID), hbm=b.beam/2;
     [-1,1].forEach(function(s){box(boat,M.mark,s*(hbm+0.02),s*(hbm+0.1),-0.6,cgTop,MID-0.2,MID+0.2);});
-    box(boat,M.mark,-b.beam*0.375,b.beam*0.375,b.top,b.top+0.06,MID-0.2,MID+0.2);
+    box(boat,M.mark,-b.beam*0.375,b.beam*0.375,b.top+0.03,b.top+0.09,MID-0.2,MID+0.2);
     box(boat,M.mark,-0.06,0.06,b.top,b.top+1.3,MID-0.06,MID+0.06);
     var ball=new THREE.Mesh(new THREE.SphereGeometry(0.45,18,12),M.mark); ball.position.set(0,b.top+1.6,MID); boat.add(ball);
     label(boat,'Center of gravity',0,b.top+3.1,MID,8,'#0C7A3B');
