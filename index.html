@@ -75,7 +75,8 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
     <button data-boat="aquila35" aria-pressed="false">Aquila 35S</button>
     <button data-boat="aquila45" aria-pressed="false">Aquila 45S</button>
     <button data-boat="everglades" aria-pressed="false">Everglades 437CX</button>
-    <button data-boat="mjm4" aria-pressed="false">MJM 4</button>
+    <button data-boat="mjm4" aria-pressed="false">MJM 47R stated</button>
+    <button data-boat="mjm4calc" aria-pressed="false">MJM 47R calculated</button>
   </div>
 </header>
 <div id="stage">
@@ -129,7 +130,9 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
     aquila45:{tip:2.83,bow:3.9,stern:44.53,eng:50.0,beam:14.97,engines:2,draft:2.8,sB:4.76,sS:3.6,top:9.74,htA:36.16,htB:19.43,sole:2.4,cat:true,
       clear:'2 feet 10 inches',note:'Aquila 45S shown with the center of gravity midway between the slings on its hoisting diagram (A45S-FIX-009, revision 1), which does not mark one. Lengths come from the printed dimensions to the anchor tip; hardtop position is scaled from the drawing and the cockpit floor height is estimated. Full load displacement is about 31,480 pounds.'},
     mjm4:{tip:8.22,bow:9.13,stern:51.92,eng:55.85,beam:11.65,engines:2,draft:2.0,sB:5.2,sS:3.3,top:9.25,htA:42.17,htB:25.95,sole:1.0,cat:false,
-      clear:'8 feet 3 inches',note:'MJM 4 shown at the center of gravity printed on its lifting diagram (21 feet 5 inches forward of the transom, at 22,844 pounds fully loaded). That point is about 3 feet 7 inches forward of the midpoint between its slings. Bow and engine positions come from the printed lengths; hardtop height is the printed 9 foot 3 inch air draft; the hardtop span is scaled from the drawing, which is marked not to scale, and the cockpit floor height is estimated.'},
+      clear:'8 feet 3 inches',note:'MJM 47R (MJM 4 lifting diagram) shown at the stated center of gravity printed on its lifting diagram (21 feet 5 inches forward of the transom, at 22,844 pounds fully loaded). That point is about 3 feet 7 inches forward of the midpoint between its slings. Bow and engine positions come from the printed lengths; hardtop height is the printed 9 foot 3 inch air draft; the hardtop span is scaled from the drawing, which is marked not to scale, and the cockpit floor height is estimated.'},
+    mjm4calc:{tip:4.62,bow:5.53,stern:48.32,eng:52.25,beam:11.65,engines:2,draft:2.0,sB:5.2,sS:3.3,top:9.25,htA:38.57,htB:22.35,sole:1.0,cat:false,
+      clear:'about 4 feet 7 inches',note:'MJM 47R (MJM 4 lifting diagram) shown with a calculated center of gravity at the midpoint between its slings: 16 feet apart, the forward one 17 feet 10 5/8 inches from the bow roller. That is about 3 feet 7 inches aft of the center of gravity printed on the drawing. Weight is 22,844 pounds fully loaded per the drawing. Hardtop height is the printed 9 foot 3 inch air draft; the hardtop span is scaled from the drawing and the cockpit floor height is estimated.'},
     aquila:{tip:8.45,bow:9.96,stern:45.91,eng:48.2,beam:14.76,engines:2,draft:2.0,sB:4.4,sS:3.0,top:8.45,htA:37.58,htB:19.66,sole:3.0,cat:true,
       clear:'8 feet 5 inches',note:'Aquila shown with the center of gravity halfway between its lifting points. Waterline and deck heights are estimated from the 2017 lifting drawing.'}
   };
@@ -196,6 +199,12 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
   label(site,'Lift midpoint 30 feet 6 inches',-17,PILE_TOP+2.5,MID,13);
   label(site,'Seawall face',-22,CAP+2,0,7);
   label(site,'North',-30,4,52,5);
+  // dashed triangle from the Trident site plan: 45 degree lines from each property corner, meeting 50 feet out
+  M.tri=new THREE.MeshBasicMaterial({color:0x0E6E8C});
+  function dashes(x0,z0,x1,z1,y){var L=Math.hypot(x1-x0,z1-z0),n=Math.floor(L/3),ux=(x1-x0)/L,uz=(z1-z0)/L,ang=Math.atan2(ux,uz);
+    for(var i=0;i<n;i++){var s=i*3+1,m=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.12,2),M.tri);m.position.set(x0+ux*s,y,z0+uz*s);m.rotation.y=ang;site.add(m);}}
+  dashes(64.92,0.3,14.92,50,CAP+0.2); dashes(-35.08,0.3,14.92,50,CAP+0.2);
+  label(site,'45 degree lines from property corners',14.92,CAP+2.4,51.5,13,'#0E6E8C');
   person(site,M.a,11.5,PIER,31).rotation.y=Math.PI/2;
   // finger pier length: seawall face to the bay end of the pier
   M.pier=new THREE.MeshBasicMaterial({color:0x8A5A00});
