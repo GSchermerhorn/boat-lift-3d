@@ -366,6 +366,13 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
       box(g,M.eng,x-0.7,x+0.7,0.5,2.2,Z(0),Z(-0.6));
       [-2.75,-3.05].forEach(function(u){var pr=new THREE.Mesh(new THREE.CylinderGeometry(0.68,0.68,0.12,20),M.steel);pr.rotation.x=Math.PI/2;pr.position.set(x,-2.45,Z(u));g.add(pr);});
     });
+    // length dimensions on the port side: waterline length, and anchor tip to back of engines
+    var MD=new THREE.MeshBasicMaterial({color:0x6B3FA0});
+    function dimBar(y,u0,u1,x,text){box(g,MD,x-0.06,x+0.06,y-0.06,y+0.06,Z(u1),Z(u0));
+      [u0,u1].forEach(function(u){box(g,MD,x-0.06,x+0.06,y-0.7,y+0.7,Z(u)-0.06,Z(u)+0.06);box(g,MD,x-0.6,x+0.6,y-0.06,y+0.06,Z(u)-0.06,Z(u)+0.06);});
+      label(g,text,x-1.2,y+1.4,Z((u0+u1)/2),13,'#6B3FA0');}
+    dimBar(0.0,0,39.85,-7.0,'Waterline length about 39 feet 10 inches');
+    dimBar(6.3,-3.85,43.755,-7.0,'Anchor to back of engines 47 feet 7 1/2 inches');
     // swim platform beside the engines
     [-1,1].forEach(function(s){box(g,M.deck,s*2.45,s*5.1,0.72,0.92,Z(0),Z(-2.4));});
   }
