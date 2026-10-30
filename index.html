@@ -129,8 +129,8 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
       clear:'10 feet 2 inches',note:'Aquila 35S shown with the center of gravity on the center of gravity line drawn on its hoisting plan (A35S-FIX-106, revision 1), midway between the slings. Lengths come from the printed dimensions; hardtop position and heights are scaled from the drawing, and the cockpit floor height is estimated. Full load displacement is about 19,960 pounds (published 9,053 kilograms).'},
     aquila45:{tip:2.83,bow:3.9,stern:44.53,eng:50.0,beam:14.97,engines:2,draft:2.8,sB:4.76,sS:3.6,top:9.74,htA:36.16,htB:19.43,sole:2.4,cat:true,
       clear:'2 feet 10 inches',note:'Aquila 45S shown with the center of gravity midway between the slings on its hoisting diagram (A45S-FIX-009, revision 1), which does not mark one. Lengths come from the printed dimensions to the anchor tip; hardtop position is scaled from the drawing and the cockpit floor height is estimated. Full load displacement is about 31,480 pounds.'},
-    mjm47r:{tip:2.62,bow:3.59,stern:46.38,eng:50.24,beam:11.65,engines:2,draft:2.0,sB:5.2,sS:3.3,top:9.25,htA:39.33,htB:22.7,sole:1.0,cat:false,
-      clear:'about 2 feet 7 inches',note:'MJM 47R shown at the center of gravity printed on the MJM 42 outboard lifting diagram (12/9/2022): 15 feet 10 1/2 inches forward of the transom, at 24,515 pounds fully loaded, about 2 feet 1 inch aft of the midpoint between its slings. Bow and engine positions come from the printed lengths and the 17 foot 9 1/2 inch bow roller to sling dimension; hardtop height is the printed 9 foot 3 inch air draft; the hardtop span is scaled from the drawing, which is marked not to scale, and the cockpit floor height is estimated.'},
+    mjm47r:{tip:2.62,bow:3.61,stern:46.38,eng:50.23,beam:11.65,engines:2,draft:1.95,sB:5.05,sS:3.45,top:9.25,htA:39.51,htB:22.78,sole:1.3,cat:false,detail:true,
+      clear:'about 2 feet 7 inches',note:'MJM 47R shown at the center of gravity printed on the MJM 42 outboard lifting diagram (12/9/2022): 15 feet 10 1/2 inches forward of the transom, at 24,515 pounds fully loaded, about 2 feet 1 inch aft of the midpoint between its slings. Bow and engine positions come from the printed lengths and the 17 foot 9 1/2 inch bow roller to sling dimension. The hull profile, cabin, hardtop, bow rail, hull ports, starboard boarding door, anchor and outboards are traced from that drawing, which is marked not to scale. The bow rail ends about 13 inches behind the anchor tip. The transom entry door is not shown on the drawing, so it is not drawn; the hull plan shape and the cockpit floor height are estimated.'},
     realm380:{tip:8.12,bow:8.55,stern:44.07,eng:49.03,beam:11.67,engines:4,draft:2.42,sB:5.0,sS:3.3,top:9.0,htA:38.37,htB:26.42,sole:1.0,cat:false,
       clear:'about 8 feet 1 inch',note:'Whaler 380 Realm shown with the center of gravity midway between the slings in its 2026 owner manual (figure 2.36.1), which gives no center of gravity and no sling dimensions. Sling, bow, transom and engine positions are scaled from that figure against the printed 38 foot hull length; the scaled engine-to-bow length came out at 40 feet 6 inches, matching the printed figure. Hardtop height is the published 9 foot bridge clearance with top; cockpit floor height is estimated. Weight is 23,500 pounds with quad engines, fuel and water.'},
     aquila:{tip:8.45,bow:9.96,stern:45.91,eng:48.2,beam:14.76,engines:2,draft:2.0,sB:4.4,sS:3.0,top:8.45,htA:37.58,htB:19.66,sole:3.0,cat:true,
@@ -257,6 +257,119 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
   }
   function sheerAt(b,z){var t=(b.stern-z)/(b.stern-b.bow);return b.sS+(b.sB-b.sS)*Math.pow(Math.max(0,Math.min(1,t)),1.4);}
 
+  // ---------- detailed MJM 47R, traced from the MJM 42 outboard lifting diagram ----------
+  function lerpT(t,u){if(u<=t[0][0])return t[0][1];for(var i=1;i<t.length;i++){if(u<=t[i][0]){var a=t[i-1],c=t[i];return a[1]+(c[1]-a[1])*(u-a[0])/(c[0]-a[0]);}}return t[t.length-1][1];}
+  function tube(g,m,p,q,r){var a=new THREE.Vector3(p[0],p[1],p[2]),c=new THREE.Vector3(q[0],q[1],q[2]),d=c.clone().sub(a),L=d.length();if(L<1e-4)return;
+    var me=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,8),m);me.position.copy(a).add(c).multiplyScalar(0.5);me.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());g.add(me);}
+  function path(g,m,pts,r){for(var i=0;i<pts.length-1;i++){tube(g,m,pts[i],pts[i+1],r);}}
+  function mesh(g,m,tris){var me=new THREE.Mesh(geo(tris),m);g.add(me);return me;}
+  function detailMJM47R(g,b){
+    var T=b.stern; function Z(u){return T-u;}
+    var SH=[[0,3.45],[8,3.62],[16,3.94],[24,4.25],[30,4.65],[36,4.88],[42.77,5.05]];
+    var KL=[[0,-1.95],[26,-2.0],[32,-1.85],[35,-1.53],[37.6,-0.97],[39.8,0],[40.9,1.53],[42.1,3.3],[42.77,5.0]];
+    var HB=[[0,5.45],[6,5.7],[22,5.8],[28,5.6],[32,5.1],[36,4.2],[39,3.1],[41,1.9],[42.2,0.8],[42.77,0.06]];
+    var CH=[[0,-0.15],[20,0],[30,0.35],[36,0.8],[40.9,1.53]], CF=[[0,0.9],[30,0.86],[36,0.72],[40.9,0.02]];
+    var U=42.77, SOLE=1.3, FWD=24;
+    function hb(u){return lerpT(HB,u);} function sh(u){return lerpT(SH,u);}
+    function stn(u){var h=hb(u),s=sh(u),k=lerpT(KL,u),cb,ch;if(u<40.9){cb=h*lerpT(CF,u);ch=Math.max(lerpT(CH,u),k+0.05);}else{cb=0.02;ch=k;}return {u:u,z:Z(u),hb:h,sh:s,k:k,cb:cb,ch:ch};}
+    function xAt(u,y){var s=stn(u);return s.cb+(s.hb-s.cb)*(y-s.ch)/(s.sh-s.ch);}
+    var N=80,S=[];for(var i=0;i<=N;i++){S.push(stn(U*i/N));}
+    var bot=[],side=[],dk=[],inner=[],cap=[];
+    for(i=0;i<N;i++){var A=S[i],B=S[i+1];
+      [-1,1].forEach(function(s){
+        quad(bot,[0,A.k,A.z],[s*A.cb,A.ch,A.z],[s*B.cb,B.ch,B.z],[0,B.k,B.z]);
+        quad(side,[s*A.cb,A.ch,A.z],[s*A.hb,A.sh,A.z],[s*B.hb,B.sh,B.z],[s*B.cb,B.ch,B.z]);
+        if(B.u<=FWD){var ia=A.hb-0.45,ib=B.hb-0.45;
+          quad(inner,[s*ia,SOLE,A.z],[s*ia,A.sh,A.z],[s*ib,B.sh,B.z],[s*ib,SOLE,B.z]);
+          quad(cap,[s*ia,A.sh,A.z],[s*A.hb,A.sh,A.z],[s*B.hb,B.sh,B.z],[s*ib,B.sh,B.z]);}
+      });
+      if(B.u<=FWD){quad(dk,[-(A.hb-0.45),SOLE,A.z],[A.hb-0.45,SOLE,A.z],[B.hb-0.45,SOLE,B.z],[-(B.hb-0.45),SOLE,B.z]);}
+      else{quad(dk,[-A.hb,A.sh,A.z],[A.hb,A.sh,A.z],[B.hb,B.sh,B.z],[-B.hb,B.sh,B.z]);}
+    }
+    var t0=S[0];[-1,1].forEach(function(s){tri(side,[0,t0.k,t0.z],[s*t0.cb,t0.ch,t0.z],[s*t0.hb,t0.sh,t0.z]);tri(side,[0,t0.k,t0.z],[s*t0.hb,t0.sh,t0.z],[0,t0.sh,t0.z]);});
+    var f=stn(FWD);quad(inner,[-(f.hb-0.45),SOLE,f.z],[f.hb-0.45,SOLE,f.z],[f.hb-0.45,f.sh,f.z],[-(f.hb-0.45),f.sh,f.z]);
+    mesh(g,M.bottom,bot);mesh(g,M.hull,side);mesh(g,M.deck,dk);mesh(g,M.hull,inner);mesh(g,M.top,cap);
+    // rub rail along the sheer
+    var rr={p:[],s:[]};for(i=0;i<=40;i++){var uu=U*i/40;rr.p.push([hb(uu)+0.04,sh(uu)-0.12,Z(uu)]);rr.s.push([-(hb(uu)+0.04),sh(uu)-0.12,Z(uu)]);}
+    path(g,M.steel,rr.p,0.09);path(g,M.steel,rr.s,0.09);
+    // pilothouse: sides, glass, windshield, aft bulkhead with door
+    function hw(u){return hb(u)-0.55;}
+    var hs=[],hg=[];
+    for(i=0;i<26;i++){var ua=12+i*0.5,ub=ua+0.5;
+      [-1,1].forEach(function(s){
+        quad(hs,[s*hw(ua),sh(ua),Z(ua)],[s*hw(ua),5.0,Z(ua)],[s*hw(ub),5.0,Z(ub)],[s*hw(ub),sh(ub),Z(ub)]);
+        if(ub<=20.7){quad(hg,[s*hw(ua),5.0,Z(ua)],[s*hw(ua),8.15,Z(ua)],[s*hw(ub),8.15,Z(ub)],[s*hw(ub),5.0,Z(ub)]);}
+        else if(ua<25){var ya=5.0+3.15*Math.max(0,(25-ua)/4.3),yb=5.0+3.15*Math.max(0,(25-ub)/4.3);quad(hg,[s*hw(ua),5.0,Z(ua)],[s*hw(ua),ya,Z(ua)],[s*hw(ub),yb,Z(ub)],[s*hw(ub),5.0,Z(ub)]);}
+      });}
+    mesh(g,M.hull,hs);
+    [-1,1].forEach(function(s){quad(hg,[s*hw(12),SOLE,Z(12)],[s*hw(12),8.6,Z(12)],[s*1.3,8.6,Z(12)],[s*1.3,SOLE,Z(12)]);});
+    quad(hg,[-(hw(25)-0.2),4.55,Z(25)],[hw(25)-0.2,4.55,Z(25)],[hw(23.3)-0.35,8.6,Z(23.3)],[-(hw(23.3)-0.35),8.6,Z(23.3)]);
+    var gm=mesh(g,M.glass,hg);gm.renderOrder=2;
+    [-1,1].forEach(function(s){
+      tube(g,M.top,[s*(hw(25)-0.2),4.55,Z(25)],[s*(hw(23.3)-0.35),8.6,Z(23.3)],0.1);
+      [12.15,16.4,20.7].forEach(function(u){tube(g,M.top,[s*hw(u),5.0,Z(u)],[s*hw(u),8.6,Z(u)],0.09);});
+      tube(g,M.top,[s*hw(12),8.2,Z(12)],[s*hw(20.7),8.2,Z(20.7)],0.07);});
+    path(g,M.eng,[[-1.3,SOLE,Z(12)-0.02],[-1.3,7.8,Z(12)-0.02],[1.3,7.8,Z(12)-0.02],[1.3,SOLE,Z(12)-0.02]],0.05);
+    // hardtop, radar dome, open array radar, antenna
+    var ht=[],hu=[6.87,9,12,15,18,21,23.6];
+    for(i=0;i<hu.length-1;i++){var a1=hu[i],a2=hu[i+1],y1=8.9+0.35*(a1-6.87)/16.73,y2=8.9+0.35*(a2-6.87)/16.73,w1=Math.min(hb(a1)-0.35,5.2),w2=Math.min(hb(a2)-0.35,5.2);
+      quad(ht,[-w1,y1,Z(a1)],[w1,y1,Z(a1)],[w2,y2,Z(a2)],[-w2,y2,Z(a2)]);quad(ht,[-w1,y1-0.32,Z(a1)],[w1,y1-0.32,Z(a1)],[w2,y2-0.32,Z(a2)],[-w2,y2-0.32,Z(a2)]);
+      [-1,1].forEach(function(s){quad(ht,[s*w1,y1-0.32,Z(a1)],[s*w1,y1,Z(a1)],[s*w2,y2,Z(a2)],[s*w2,y2-0.32,Z(a2)]);});}
+    quad(ht,[-5.2,8.58,Z(6.87)],[5.2,8.58,Z(6.87)],[5.2,8.9,Z(6.87)],[-5.2,8.9,Z(6.87)]);
+    var w3=Math.min(hb(23.6)-0.35,5.2);quad(ht,[-w3,8.93,Z(23.6)],[w3,8.93,Z(23.6)],[w3,9.25,Z(23.6)],[-w3,9.25,Z(23.6)]);
+    mesh(g,M.top,ht);
+    var dome=new THREE.Mesh(new THREE.SphereGeometry(0.75,18,12,0,Math.PI*2,0,Math.PI/2),M.top);dome.position.set(0,9.05,Z(13.3));g.add(dome);
+    box(g,M.top,-0.5,0.5,9.05,9.0+0.25,Z(13.3)-0.5,Z(13.3)+0.5);
+    box(g,M.eng,-0.3,0.3,9.2,9.75,Z(21.3)-0.3,Z(21.3)+0.3);box(g,M.eng,-2.0,2.0,9.75,10.05,Z(21.3)-0.18,Z(21.3)+0.18);
+    tube(g,M.steel,[1.6,9.1,Z(16.5)],[1.9,16.8,Z(14.8)],0.035);
+    // forward cabin trunk with hatches
+    function tw(u){var w=hb(u)*0.62;if(u>34){w*=Math.sqrt(Math.max(0,1-Math.pow((u-34)/2.4,2)));}return Math.max(w,0.05);}
+    var tr=[],hat=[];for(i=0;i<24;i++){var p1=25+i*0.475,p2=p1+0.475;var t1=sh(p1)+1.2,t2=sh(p2)+1.2;
+      quad(tr,[-tw(p1),t1,Z(p1)],[tw(p1),t1,Z(p1)],[tw(p2),t2,Z(p2)],[-tw(p2),t2,Z(p2)]);
+      [-1,1].forEach(function(s){quad(tr,[s*tw(p1),sh(p1),Z(p1)],[s*tw(p1),t1,Z(p1)],[s*tw(p2),t2,Z(p2)],[s*tw(p2),sh(p2),Z(p2)]);});}
+    mesh(g,M.hull,tr);
+    [[27.5,29.4],[32.6,34.2]].forEach(function(h){quad(hat,[-0.8,sh(h[0])+1.22,Z(h[0])],[0.8,sh(h[0])+1.22,Z(h[0])],[0.8,sh(h[1])+1.22,Z(h[1])],[-0.8,sh(h[1])+1.22,Z(h[1])]);});
+    mesh(g,M.glass,hat);
+    // hull side ports, both sides
+    var pt=[];[[26.2,30.1,2.85,3.6],[32.7,36.5,3.15,3.9]].forEach(function(w){[-1,1].forEach(function(s){
+      for(var u=w[0];u<w[1]-1e-6;u+=0.2){var v=Math.min(u+0.2,w[1]);
+        quad(pt,[s*(xAt(u,w[2])+0.04),w[2],Z(u)],[s*(xAt(u,w[3])+0.04),w[3],Z(u)],[s*(xAt(v,w[3])+0.04),w[3],Z(v)],[s*(xAt(v,w[2])+0.04),w[2],Z(v)]);}});});
+    mesh(g,M.eng,pt);
+    // starboard hull boarding door (faces the finger pier): outline on the hull side
+    var d0=7.67,d1=9.28,db=1.73,dt=sh(8.5)-0.05,o=0.05;
+    path(g,M.eng,[[xAt(d0,db)+o,db,Z(d0)],[xAt(d0,dt)+o,dt,Z(d0)]],0.045);path(g,M.eng,[[xAt(d1,db)+o,db,Z(d1)],[xAt(d1,dt)+o,dt,Z(d1)]],0.045);
+    path(g,M.eng,[[xAt(d0,db)+o,db,Z(d0)],[xAt(d1,db)+o,db,Z(d1)]],0.045);
+    box(g,M.steel,xAt(8.3,2.6)+0.02,xAt(8.3,2.6)+0.12,2.55,2.65,Z(8.3)-0.25,Z(8.3)+0.25);
+    label(g,'Starboard boarding door',xAt(8.5,3)+2.2,4.6,Z(8.5),6,'#3A4650');
+    // cockpit grab rails on the gunwale
+    [-1,1].forEach(function(s){var pts=[];for(var u=1.0;u<=11.5;u+=1.5){pts.push([s*(hb(u)-0.25),sh(u)+0.8,Z(u)]);tube(g,M.steel,[s*(hb(u)-0.25),sh(u),Z(u)],[s*(hb(u)-0.25),sh(u)+0.8,Z(u)],0.035);}path(g,M.steel,pts,0.04);});
+    // bow rail traced from the drawing: top rail, aft drop, four forward-leaning stanchions per side, pulpit closing at the bow
+    function railY(u){return 6.97+(7.45-6.97)*(u-26)/(42.67-26);}
+    function railX(u){return Math.max(0,hb(u)-0.3);}
+    [-1,1].forEach(function(s){
+      var pts=[[s*railX(24.3),sh(24.3),Z(24.3)]];
+      [25.6,27,29,31,33,35,37,38.5,40,41,42,42.4].forEach(function(u){pts.push([s*railX(u),railY(u),Z(u)]);});
+      pts.push([0,railY(42.67),Z(42.67)]);path(g,M.steel,pts,0.06);
+      [[28.0,29.3],[32.0,33.3],[36.1,37.4],[40.1,41.1]].forEach(function(p){tube(g,M.steel,[s*railX(p[0]),sh(p[0]),Z(p[0])],[s*railX(p[1]),railY(p[1]),Z(p[1])],0.05);});
+    });
+    // bow roller and anchor: roller tip 47 feet 7 1/2 inches ahead of the engines, about 11 inches ahead of the stem
+    box(g,M.steel,-0.2,0.2,4.45,4.75,Z(43.3),Z(42.3));
+    var c1=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,0.42,12),M.eng);c1.rotation.z=Math.PI/2;c1.position.set(0,4.45,Z(43.25));g.add(c1);
+    tube(g,M.steel,[0,4.6,Z(42.7)],[0,4.05,Z(43.6)],0.07);
+    var an=[];var tipP=[0,3.86,Z(43.755)],aL=[-0.55,3.45,Z(43.05)],aR=[0.55,3.45,Z(43.05)],aB=[0,3.15,Z(43.15)],aT=[0,4.1,Z(43.45)];
+    tri(an,tipP,aL,aT);tri(an,tipP,aT,aR);tri(an,tipP,aR,aB);tri(an,tipP,aB,aL);tri(an,aL,aB,aT);tri(an,aB,aR,aT);
+    mesh(g,M.steel,an);
+    // twin outboards: Mercury V12 600, cowl rear 47 feet 7 1/2 inches behind the bow roller
+    [-1.3,1.3].forEach(function(x){
+      box(g,M.eng,x-1.05,x+1.05,1.65,4.35,Z(-0.35),Z(-3.85));box(g,M.eng,x-0.9,x+0.9,4.35,4.65,Z(-0.6),Z(-3.5));
+      box(g,M.eng,x-0.62,x+0.62,-0.9,1.65,Z(-0.6),Z(-2.9));box(g,M.eng,x-0.27,x+0.27,-3.3,-0.9,Z(-0.9),Z(-2.6));
+      box(g,M.eng,x-0.7,x+0.7,0.5,2.2,Z(0),Z(-0.6));
+      [-2.75,-3.05].forEach(function(u){var pr=new THREE.Mesh(new THREE.CylinderGeometry(0.68,0.68,0.12,20),M.steel);pr.rotation.x=Math.PI/2;pr.position.set(x,-2.45,Z(u));g.add(pr);});
+    });
+    // swim platform beside the engines
+    [-1,1].forEach(function(s){box(g,M.deck,s*2.45,s*5.1,0.72,0.92,Z(0),Z(-2.4));});
+  }
+
   var dyn=null, current='whaler';
   function build(){
     if(dyn){scene.remove(dyn);dyn.traverse(function(o){if(o.geometry){o.geometry.dispose();}if(o.material&&o.material.map){o.material.map.dispose();o.material.dispose();}});}
@@ -272,6 +385,8 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
 
     var boat=new THREE.Group(); boat.position.y=wl; dyn.add(boat);
     var len=b.stern-b.bow, tc=(b.stern-b.htA)/len, hullW=b.beam*0.3, engX=[];
+    if(b.detail){detailMJM47R(boat,b);}
+    else{
     if(b.cat){
       var off=b.beam/2-hullW/2;
       hull(boat,b,hullW,-off,0,false); hull(boat,b,hullW,off,0,false);
@@ -295,6 +410,7 @@ header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:2;
       box(boat,M.eng,x-0.25,x+0.25,-2.4,0.9,b.stern+0.3,b.stern+1.1);
     });
     if(b.tip<b.bow){box(boat,M.steel,-0.25,0.25,b.sB-0.3,b.sB+0.1,b.tip,b.bow+0.6);}
+    }
     person(boat,M.b,b.cat?2.5:2.2,b.sole,b.stern-4.5);
     // center of gravity mark: stripe down both hull sides, stripe across the hardtop, ball on a post
     var cgTop=b.cat?b.sole+2.2:sheerAt(b,MID), hbm=b.beam/2;
